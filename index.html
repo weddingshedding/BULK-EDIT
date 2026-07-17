@@ -1,0 +1,1427 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#5b21b6" />
+  <meta name="description" content="Bulk resize, compress and manually edit photos in your browser. Default 400x400 px and 100 KB." />
+  <title>BulkPix Studio | Bulk Photo Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-soft: #f8f7ff;
+  --text: #17142d;
+  --muted: #6c6980;
+  --border: #e5e2ef;
+  --primary: #5b21b6;
+  --primary-2: #7c3aed;
+  --primary-soft: #eee8ff;
+  --success: #087e5b;
+  --success-soft: #e9fbf4;
+  --danger: #c43245;
+  --shadow: 0 16px 50px rgba(35, 23, 76, 0.08);
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-width: 320px;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 12% -8%, rgba(124, 58, 237, .10), transparent 28rem),
+    var(--bg);
+}
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .56; }
+input, select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+  padding: 9px 11px;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+input:focus, select:focus, button:focus-visible {
+  border-color: var(--primary-2);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, .14);
+  outline: none;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: 76px;
+  padding: 14px clamp(18px, 4vw, 52px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: rgba(255, 255, 255, .88);
+  border-bottom: 1px solid rgba(229, 226, 239, .88);
+  backdrop-filter: blur(18px);
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  box-shadow: 0 10px 24px rgba(91, 33, 182, .24);
+}
+.brand-mark svg { width: 26px; height: 26px; }
+.brand h1 { margin: 0 0 3px; font-size: 18px; letter-spacing: -.02em; }
+.brand p { margin: 0; font-size: 12px; color: var(--muted); }
+.privacy-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: 12px;
+  font-weight: 700;
+}
+.privacy-pill svg { width: 17px; height: 17px; }
+
+.app-shell { width: min(1480px, calc(100% - 36px)); margin: 28px auto 54px; }
+.card {
+  background: var(--surface);
+  border: 1px solid rgba(229, 226, 239, .9);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+.hero-card {
+  min-height: 194px;
+  padding: clamp(24px, 4vw, 42px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 38px;
+  overflow: hidden;
+  position: relative;
+  color: #fff;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 85% 20%, rgba(255, 255, 255, .18), transparent 18rem),
+    linear-gradient(135deg, #3b147c 0%, #6d28d9 65%, #8b5cf6 100%);
+  box-shadow: 0 22px 70px rgba(71, 33, 144, .24);
+}
+.hero-card::after {
+  content: "";
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  right: -80px;
+  bottom: -130px;
+  border: 38px solid rgba(255, 255, 255, .08);
+  border-radius: 50%;
+}
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 9px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  opacity: .78;
+}
+.hero-card h2 { max-width: 760px; margin: 0 0 12px; font-size: clamp(27px, 4vw, 46px); line-height: 1.06; letter-spacing: -.045em; }
+.hero-card p { max-width: 790px; margin: 0; color: rgba(255,255,255,.8); font-size: 15px; line-height: 1.65; }
+.hero-stats { flex: 0 0 auto; display: grid; grid-template-columns: repeat(3, minmax(104px, 1fr)); gap: 10px; position: relative; z-index: 1; }
+.hero-stats div { min-width: 110px; padding: 16px 15px; border: 1px solid rgba(255,255,255,.15); border-radius: 17px; background: rgba(255,255,255,.10); backdrop-filter: blur(10px); }
+.hero-stats strong { display: block; margin-bottom: 5px; font-size: 20px; }
+.hero-stats span { display: block; color: rgba(255,255,255,.7); font-size: 10px; }
+
+.workspace-grid { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 22px; margin-top: 22px; align-items: start; }
+.settings-panel { position: sticky; top: 98px; padding: 20px; }
+.card-heading, .queue-header, .process-top, .editor-header, .editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.card-heading > div, .queue-header > div:first-child, .process-top > div:first-child { display: flex; align-items: center; gap: 11px; }
+.card-heading h3, .queue-header h3, .process-top h3, .editor-header h3 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+.queue-header p, .process-top p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.step-number { width: 27px; height: 27px; display: inline-grid; place-items: center; flex: 0 0 auto; border-radius: 9px; background: var(--primary-soft); color: var(--primary); font-size: 12px; font-weight: 800; }
+.icon-button { width: 38px; height: 38px; display: grid; place-items: center; padding: 0; border: 1px solid var(--border); border-radius: 11px; background: #fff; color: var(--muted); }
+.icon-button:hover { color: var(--primary); background: var(--primary-soft); }
+.icon-button svg { width: 19px; height: 19px; }
+.setting-group { padding: 17px 0; border-bottom: 1px solid #f0edf6; }
+.setting-group:last-child { padding-bottom: 0; border-bottom: 0; }
+.group-label, .field span { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: #353148; }
+.two-col, .three-col { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.three-col { grid-template-columns: repeat(3, 1fr); }
+.checkbox-row { display: flex; align-items: center; gap: 9px; margin-top: 10px; color: var(--muted); font-size: 12px; cursor: pointer; }
+.checkbox-row input { width: 16px; min-height: 16px; accent-color: var(--primary); }
+.input-with-unit { position: relative; }
+.input-with-unit input { padding-right: 44px; }
+.input-with-unit span { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 700; color: var(--muted); }
+.field-help { margin: 8px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.background-row { display: grid; grid-template-columns: 48px 1fr; gap: 10px; }
+.color-input { padding: 4px; }
+
+.main-panel { min-width: 0; display: grid; gap: 22px; }
+.upload-card { min-height: 310px; padding: 38px 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border: 2px dashed #d8d2e9; box-shadow: none; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+.upload-card.is-dragging { border-color: var(--primary-2); background: var(--surface-soft); transform: translateY(-2px); }
+.upload-icon { width: 62px; height: 62px; display: grid; place-items: center; margin-bottom: 18px; border-radius: 20px; color: var(--primary); background: var(--primary-soft); }
+.upload-icon svg { width: 31px; height: 31px; }
+.upload-card h3 { margin: 0 0 8px; font-size: 21px; letter-spacing: -.025em; }
+.upload-card p { margin: 0 0 22px; color: var(--muted); font-size: 13px; }
+.upload-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.primary-button, .secondary-button, .success-button, .text-button, .tool-button {
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  font-weight: 700;
+  font-size: 12px;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.primary-button { color: #fff; background: linear-gradient(135deg, var(--primary), var(--primary-2)); box-shadow: 0 10px 22px rgba(91,33,182,.18); }
+.primary-button:hover, .success-button:hover { transform: translateY(-1px); }
+.secondary-button { color: var(--text); background: #fff; border-color: var(--border); }
+.secondary-button:hover { background: var(--surface-soft); }
+.success-button { color: #fff; background: var(--success); box-shadow: 0 10px 22px rgba(8,126,91,.16); }
+.text-button { min-height: auto; padding: 7px 9px; background: transparent; color: var(--primary); }
+.text-button:hover { background: var(--primary-soft); }
+.danger-text { color: var(--danger); }
+.large-button { min-height: 48px; display: inline-flex; align-items: center; gap: 9px; padding-inline: 20px; }
+.large-button svg, .success-button svg { width: 18px; height: 18px; }
+
+.queue-card, .process-card { padding: 22px; }
+.queue-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px; }
+.toolbar-row { margin: 18px 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.search-box { max-width: 340px; width: 100%; position: relative; }
+.search-box svg { position: absolute; width: 18px; height: 18px; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+.search-box input { padding-left: 39px; }
+.view-note { color: var(--muted); font-size: 11px; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 14px; max-height: 690px; overflow: auto; padding: 2px 4px 4px 2px; }
+.photo-card { position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: 15px; background: #fff; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.photo-card:hover { transform: translateY(-2px); border-color: #c9bee7; box-shadow: 0 12px 26px rgba(44,29,87,.09); }
+.photo-thumb-wrap { aspect-ratio: 1 / 1; display: grid; place-items: center; overflow: hidden; background: repeating-conic-gradient(#f5f3fa 0% 25%, #fff 0% 50%) 50% / 14px 14px; }
+.photo-thumb-wrap img { width: 100%; height: 100%; object-fit: contain; }
+.photo-select { position: absolute; left: 9px; top: 9px; width: 20px; min-height: 20px; accent-color: var(--primary); z-index: 2; }
+.edit-badge { position: absolute; right: 8px; top: 8px; padding: 5px 7px; border-radius: 8px; color: #fff; background: rgba(91,33,182,.92); font-size: 9px; font-weight: 800; }
+.photo-info { padding: 11px; }
+.photo-name { margin: 0 0 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 700; }
+.photo-meta { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 9px; }
+.photo-actions { display: flex; gap: 7px; margin-top: 10px; }
+.photo-actions button { flex: 1; min-height: 34px; padding: 7px; border: 1px solid var(--border); border-radius: 9px; background: #fff; color: var(--text); font-size: 10px; font-weight: 700; }
+.photo-actions button:hover { background: var(--primary-soft); color: var(--primary); }
+.photo-actions .remove-one:hover { color: var(--danger); background: #fff0f2; }
+.empty-state { grid-column: 1 / -1; padding: 42px; text-align: center; color: var(--muted); }
+
+.process-top { align-items: flex-start; }
+.progress-area { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
+.progress-meta, .progress-stats { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.progress-meta { margin-bottom: 9px; font-size: 11px; }
+.progress-track { height: 11px; overflow: hidden; border-radius: 999px; background: #ece8f6; }
+.progress-bar { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--primary), #a78bfa); transition: width .2s ease; }
+.progress-stats { margin-top: 10px; color: var(--muted); font-size: 10px; }
+.result-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.error-list { margin-top: 15px; padding: 12px; max-height: 160px; overflow: auto; border-radius: 12px; background: #fff1f3; color: #8f2333; font-size: 10px; }
+.error-list p { margin: 4px 0; }
+
+.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 18px; background: rgba(19,13,38,.74); backdrop-filter: blur(8px); }
+.editor-dialog { width: min(1180px, 100%); max-height: calc(100vh - 36px); overflow: hidden; display: grid; grid-template-rows: auto minmax(0,1fr) auto; border-radius: 24px; background: #fff; box-shadow: 0 32px 90px rgba(10,6,22,.38); }
+.editor-header, .editor-footer { padding: 18px 21px; border-bottom: 1px solid var(--border); }
+.editor-header .eyebrow { margin-bottom: 5px; color: var(--primary); }
+.editor-footer { border-top: 1px solid var(--border); border-bottom: 0; }
+.editor-footer > div { display: flex; gap: 7px; }
+.editor-body { min-height: 0; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr); }
+.canvas-stage { min-height: 540px; position: relative; display: grid; place-items: center; overflow: hidden; padding: 30px; background: #181524; }
+.canvas-stage canvas { max-width: 100%; max-height: calc(100vh - 220px); width: auto; height: auto; box-shadow: 0 20px 55px rgba(0,0,0,.34); background: repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50% / 16px 16px; }
+.canvas-loading { position: absolute; padding: 10px 14px; border-radius: 10px; color: #fff; background: rgba(0,0,0,.64); font-size: 12px; }
+.editor-controls { overflow: auto; padding: 4px 20px 22px; }
+.control-section { padding: 18px 0; border-bottom: 1px solid var(--border); }
+.control-section:last-child { border-bottom: 0; }
+.control-section h4 { margin: 0 0 13px; font-size: 13px; }
+.control-button-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.tool-button { min-height: 37px; padding: 8px 9px; background: #fff; border-color: var(--border); }
+.tool-button:hover { color: var(--primary); background: var(--primary-soft); }
+.range-field { display: block; margin-top: 14px; }
+.range-field > span { display: flex; justify-content: space-between; margin-bottom: 7px; color: var(--muted); font-size: 10px; }
+.range-field b { color: #383349; font-weight: 700; }
+.range-field input { min-height: auto; padding: 0; border: 0; accent-color: var(--primary); }
+.compact-fields input { min-height: 38px; }
+
+.toast-region { position: fixed; right: 18px; bottom: 18px; z-index: 200; display: grid; gap: 9px; }
+.toast { max-width: 340px; padding: 12px 14px; border-radius: 12px; color: #fff; background: #272238; box-shadow: 0 13px 35px rgba(0,0,0,.2); font-size: 11px; animation: toast-in .22s ease both; }
+.toast.success { background: var(--success); }
+.toast.error { background: var(--danger); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+
+.is-hidden { display: none !important; }
+
+@media (max-width: 1080px) {
+  .hero-card { align-items: flex-start; flex-direction: column; }
+  .hero-stats { width: 100%; }
+  .workspace-grid { grid-template-columns: 1fr; }
+  .settings-panel { position: static; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 18px; }
+  .settings-panel .card-heading { grid-column: 1 / -1; }
+  .setting-group:nth-last-child(-n+2) { border-bottom: 0; }
+  .editor-body { grid-template-columns: 1fr; overflow: auto; }
+  .canvas-stage { min-height: 430px; }
+  .editor-controls { overflow: visible; }
+}
+
+@media (max-width: 760px) {
+  .app-header { position: static; align-items: flex-start; }
+  .privacy-pill { display: none; }
+  .app-shell { width: min(100% - 22px, 1480px); margin-top: 14px; }
+  .hero-card { padding: 25px 20px; border-radius: 20px; }
+  .hero-card h2 { font-size: 28px; }
+  .hero-stats { grid-template-columns: 1fr; }
+  .hero-stats div { min-width: 0; }
+  .settings-panel { display: block; }
+  .setting-group { border-bottom: 1px solid #f0edf6 !important; }
+  .setting-group:last-child { border-bottom: 0 !important; }
+  .queue-header, .process-top, .toolbar-row, .editor-footer { align-items: stretch; flex-direction: column; }
+  .queue-actions { justify-content: flex-start; }
+  .process-top .large-button { justify-content: center; width: 100%; }
+  .view-note { display: none; }
+  .photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .editor-dialog { max-height: calc(100vh - 16px); border-radius: 18px; }
+  .canvas-stage { min-height: 340px; padding: 16px; }
+  .editor-footer > div { display: grid; grid-template-columns: 1fr 1fr; }
+  .three-col { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 430px) {
+  .brand p { display: none; }
+  .photo-grid { grid-template-columns: 1fr; }
+  .upload-actions { width: 100%; }
+  .upload-actions button { width: 100%; }
+  .two-col { grid-template-columns: 1fr; }
+  .progress-stats { align-items: flex-start; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+}
+
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 7.5A3.5 3.5 0 0 1 7.5 4h9A3.5 3.5 0 0 1 20 7.5v9a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-9Z" stroke="currentColor" stroke-width="1.8"/><path d="m6.7 16.6 3.25-3.45a1.5 1.5 0 0 1 2.16-.03l1.22 1.22 1.15-1.08a1.5 1.5 0 0 1 2.1.03l.72.73" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="15.7" cy="8.4" r="1.35" fill="currentColor"/></svg>
+      </div>
+      <div>
+        <h1>BulkPix Studio</h1>
+        <p>Bulk resize, compress & manual photo editing</p>
+      </div>
+    </div>
+    <div class="privacy-pill">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="4.5" y="10" width="15" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 14v2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      100% browser processing
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="hero-card">
+      <div>
+        <span class="eyebrow">GitHub Pages Ready</span>
+        <h2>1000 photos ko ek saath resize aur compress karein</h2>
+        <p>Default output <strong>400 × 400 px</strong> aur <strong>100 KB maximum</strong>. Kisi bhi photo ko individual manual editor me fine-tune bhi kar sakte hain.</p>
+      </div>
+      <div class="hero-stats" aria-label="Default settings">
+        <div><strong>400×400</strong><span>Default size</span></div>
+        <div><strong>100 KB</strong><span>Max file size</span></div>
+        <div><strong>1000</strong><span>Bulk photos</span></div>
+      </div>
+    </section>
+
+    <section class="workspace-grid">
+      <aside class="settings-panel card">
+        <div class="card-heading">
+          <div>
+            <span class="step-number">1</span>
+            <h3>Bulk Settings</h3>
+          </div>
+          <button class="icon-button" id="resetSettingsBtn" type="button" title="Reset settings" aria-label="Reset settings">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 4v5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.2 14a7 7 0 1 0 1.4-7.5L4 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="setting-group">
+          <label class="group-label">Output dimensions</label>
+          <div class="two-col">
+            <label class="field"><span>Width (px)</span><input id="widthInput" type="number" inputmode="numeric" min="1" max="8000" value="400" /></label>
+            <label class="field"><span>Height (px)</span><input id="heightInput" type="number" inputmode="numeric" min="1" max="8000" value="400" /></label>
+          </div>
+          <label class="checkbox-row"><input id="lockRatioInput" type="checkbox" /><span>Lock aspect ratio</span></label>
+        </div>
+
+        <div class="setting-group">
+          <label class="group-label" for="targetKbInput">Maximum file size</label>
+          <div class="input-with-unit"><input id="targetKbInput" type="number" inputmode="numeric" min="5" max="5000" value="100" /><span>KB</span></div>
+          <p class="field-help">JPG/WebP me target ke neeche laane ke liye smart quality search use hoti hai.</p>
+        </div>
+
+        <div class="setting-group">
+          <label class="group-label" for="formatSelect">Output format</label>
+          <select id="formatSelect">
+            <option value="image/jpeg" selected>JPG • Best compatibility</option>
+            <option value="image/webp">WebP • Smaller size</option>
+            <option value="image/png">PNG • Transparency</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
+          <label class="group-label" for="fitSelect">Resize mode</label>
+          <select id="fitSelect">
+            <option value="contain" selected>Fit inside + background</option>
+            <option value="cover">Fill frame + crop</option>
+            <option value="stretch">Stretch to exact size</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
+          <label class="group-label">Background</label>
+          <div class="background-row">
+            <input id="backgroundColorInput" class="color-input" type="color" value="#ffffff" aria-label="Background color" />
+            <input id="backgroundHexInput" type="text" value="#FFFFFF" maxlength="7" aria-label="Background hex color" />
+          </div>
+          <label class="checkbox-row"><input id="transparentInput" type="checkbox" /><span>Transparent background (PNG only)</span></label>
+        </div>
+
+        <div class="setting-group">
+          <label class="group-label" for="filenamePrefixInput">Filename prefix</label>
+          <input id="filenamePrefixInput" type="text" value="optimized-" placeholder="optimized-" />
+        </div>
+      </aside>
+
+      <section class="main-panel">
+        <div class="upload-card card" id="dropZone">
+          <input id="fileInput" type="file" accept="image/*" multiple hidden />
+          <input id="folderInput" type="file" accept="image/*" webkitdirectory directory multiple hidden />
+          <div class="upload-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Photos ya poora folder yahan drop karein</h3>
+          <p>JPG, PNG, WebP, GIF ka first frame. Maximum 1000 photos per batch.</p>
+          <div class="upload-actions">
+            <button id="choosePhotosBtn" class="primary-button" type="button">Choose Photos</button>
+            <button id="chooseFolderBtn" class="secondary-button" type="button">Choose Folder</button>
+          </div>
+        </div>
+
+        <div class="queue-card card is-hidden" id="queueCard">
+          <div class="queue-header">
+            <div>
+              <span class="step-number">2</span>
+              <div>
+                <h3>Photo Queue</h3>
+                <p id="queueSummary">0 photos selected</p>
+              </div>
+            </div>
+            <div class="queue-actions">
+              <button id="selectAllBtn" class="text-button" type="button">Select all</button>
+              <button id="removeSelectedBtn" class="text-button danger-text" type="button">Remove selected</button>
+              <button id="clearAllBtn" class="text-button" type="button">Clear all</button>
+            </div>
+          </div>
+
+          <div class="toolbar-row">
+            <label class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <input id="searchInput" type="search" placeholder="Search filename..." />
+            </label>
+            <div class="view-note">Manual edits are saved per photo</div>
+          </div>
+
+          <div class="photo-grid" id="photoGrid" aria-live="polite"></div>
+        </div>
+
+        <div class="process-card card is-hidden" id="processCard">
+          <div class="process-top">
+            <div>
+              <span class="step-number">3</span>
+              <div><h3>Process & Download</h3><p>Sab photos process hokar ek hi ZIP file me milengi.</p></div>
+            </div>
+            <button id="processBtn" class="primary-button large-button" type="button">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Process All & Prepare ZIP
+            </button>
+          </div>
+          <div class="progress-area is-hidden" id="progressArea">
+            <div class="progress-meta"><span id="progressText">Preparing...</span><strong id="progressPercent">0%</strong></div>
+            <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+            <div class="progress-stats">
+              <span id="successCount">0 completed</span>
+              <span id="errorCount">0 errors</span>
+              <span id="sizeSavedText">0 KB saved</span>
+            </div>
+          </div>
+          <div class="result-actions is-hidden" id="resultActions">
+            <button id="downloadZipBtn" class="success-button" type="button">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Download All Photos as ZIP
+            </button>
+            <button id="downloadIndividualBtn" class="secondary-button is-hidden" type="button" aria-hidden="true" tabindex="-1">Download individually</button>
+          </div>
+          <div class="error-list is-hidden" id="errorList"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal-backdrop is-hidden" id="editorModal" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+    <div class="editor-dialog">
+      <div class="editor-header">
+        <div>
+          <span class="eyebrow">Manual editor</span>
+          <h3 id="editorTitle">Edit photo</h3>
+        </div>
+        <button id="closeEditorBtn" class="icon-button" type="button" aria-label="Close editor">
+          <svg viewBox="0 0 24 24" fill="none"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="editor-body">
+        <div class="canvas-stage" id="canvasStage">
+          <canvas id="editorCanvas" width="400" height="400"></canvas>
+          <div class="canvas-loading is-hidden" id="canvasLoading">Loading preview...</div>
+        </div>
+
+        <div class="editor-controls">
+          <div class="control-section">
+            <h4>Transform</h4>
+            <div class="control-button-grid">
+              <button class="tool-button" id="rotateLeftBtn" type="button">↺ Rotate left</button>
+              <button class="tool-button" id="rotateRightBtn" type="button">↻ Rotate right</button>
+              <button class="tool-button" id="flipHBtn" type="button">↔ Flip H</button>
+              <button class="tool-button" id="flipVBtn" type="button">↕ Flip V</button>
+            </div>
+            <label class="range-field"><span><b>Zoom / Crop</b><output id="zoomOutput">100%</output></span><input id="zoomRange" type="range" min="50" max="300" value="100" /></label>
+            <label class="range-field"><span><b>Move X</b><output id="panXOutput">0</output></span><input id="panXRange" type="range" min="-100" max="100" value="0" /></label>
+            <label class="range-field"><span><b>Move Y</b><output id="panYOutput">0</output></span><input id="panYRange" type="range" min="-100" max="100" value="0" /></label>
+          </div>
+
+          <div class="control-section">
+            <h4>Color & Detail</h4>
+            <label class="range-field"><span><b>Brightness</b><output id="brightnessOutput">100%</output></span><input id="brightnessRange" type="range" min="0" max="200" value="100" /></label>
+            <label class="range-field"><span><b>Contrast</b><output id="contrastOutput">100%</output></span><input id="contrastRange" type="range" min="0" max="200" value="100" /></label>
+            <label class="range-field"><span><b>Saturation</b><output id="saturationOutput">100%</output></span><input id="saturationRange" type="range" min="0" max="200" value="100" /></label>
+            <label class="range-field"><span><b>Grayscale</b><output id="grayscaleOutput">0%</output></span><input id="grayscaleRange" type="range" min="0" max="100" value="0" /></label>
+            <label class="range-field"><span><b>Blur</b><output id="blurOutput">0px</output></span><input id="blurRange" type="range" min="0" max="10" step="0.5" value="0" /></label>
+            <label class="range-field"><span><b>Sharpness</b><output id="sharpnessOutput">0</output></span><input id="sharpnessRange" type="range" min="0" max="5" step="0.5" value="0" /></label>
+          </div>
+
+          <div class="control-section">
+            <h4>Photo-specific output</h4>
+            <label class="checkbox-row"><input id="useCustomOutputInput" type="checkbox" /><span>Use custom size/KB for this photo</span></label>
+            <div class="three-col compact-fields">
+              <label class="field"><span>Width</span><input id="customWidthInput" type="number" min="1" max="8000" value="400" /></label>
+              <label class="field"><span>Height</span><input id="customHeightInput" type="number" min="1" max="8000" value="400" /></label>
+              <label class="field"><span>Max KB</span><input id="customKbInput" type="number" min="5" max="5000" value="100" /></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-footer">
+        <button id="resetEditBtn" class="secondary-button" type="button">Reset this photo</button>
+        <div>
+          <button id="cancelEditBtn" class="text-button" type="button">Cancel</button>
+          <button id="saveEditBtn" class="primary-button" type="button">Save manual edit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+  <script>
+'use strict';
+
+const MAX_FILES = 1000;
+const DEFAULTS = Object.freeze({
+  width: 400,
+  height: 400,
+  targetKb: 100,
+  format: 'image/jpeg',
+  fit: 'contain',
+  background: '#FFFFFF',
+  transparent: false,
+  prefix: 'optimized-'
+});
+
+const state = {
+  items: [],
+  processing: false,
+  currentEditId: null,
+  editorDraft: null,
+  editorImage: null,
+  results: [],
+  resultUrls: [],
+  zipBlob: null,
+  originalRatio: DEFAULTS.width / DEFAULTS.height
+};
+
+const $ = (id) => document.getElementById(id);
+const els = {
+  fileInput: $('fileInput'), folderInput: $('folderInput'), choosePhotosBtn: $('choosePhotosBtn'), chooseFolderBtn: $('chooseFolderBtn'), dropZone: $('dropZone'),
+  widthInput: $('widthInput'), heightInput: $('heightInput'), targetKbInput: $('targetKbInput'), formatSelect: $('formatSelect'), fitSelect: $('fitSelect'),
+  backgroundColorInput: $('backgroundColorInput'), backgroundHexInput: $('backgroundHexInput'), transparentInput: $('transparentInput'), filenamePrefixInput: $('filenamePrefixInput'), lockRatioInput: $('lockRatioInput'), resetSettingsBtn: $('resetSettingsBtn'),
+  queueCard: $('queueCard'), processCard: $('processCard'), queueSummary: $('queueSummary'), photoGrid: $('photoGrid'), searchInput: $('searchInput'),
+  selectAllBtn: $('selectAllBtn'), removeSelectedBtn: $('removeSelectedBtn'), clearAllBtn: $('clearAllBtn'), processBtn: $('processBtn'),
+  progressArea: $('progressArea'), progressText: $('progressText'), progressPercent: $('progressPercent'), progressBar: $('progressBar'), successCount: $('successCount'), errorCount: $('errorCount'), sizeSavedText: $('sizeSavedText'),
+  resultActions: $('resultActions'), downloadZipBtn: $('downloadZipBtn'), downloadIndividualBtn: $('downloadIndividualBtn'), errorList: $('errorList'),
+  editorModal: $('editorModal'), editorTitle: $('editorTitle'), closeEditorBtn: $('closeEditorBtn'), cancelEditBtn: $('cancelEditBtn'), saveEditBtn: $('saveEditBtn'), resetEditBtn: $('resetEditBtn'), editorCanvas: $('editorCanvas'), canvasLoading: $('canvasLoading'),
+  rotateLeftBtn: $('rotateLeftBtn'), rotateRightBtn: $('rotateRightBtn'), flipHBtn: $('flipHBtn'), flipVBtn: $('flipVBtn'), zoomRange: $('zoomRange'), panXRange: $('panXRange'), panYRange: $('panYRange'), brightnessRange: $('brightnessRange'), contrastRange: $('contrastRange'), saturationRange: $('saturationRange'), grayscaleRange: $('grayscaleRange'), blurRange: $('blurRange'), sharpnessRange: $('sharpnessRange'),
+  zoomOutput: $('zoomOutput'), panXOutput: $('panXOutput'), panYOutput: $('panYOutput'), brightnessOutput: $('brightnessOutput'), contrastOutput: $('contrastOutput'), saturationOutput: $('saturationOutput'), grayscaleOutput: $('grayscaleOutput'), blurOutput: $('blurOutput'), sharpnessOutput: $('sharpnessOutput'),
+  useCustomOutputInput: $('useCustomOutputInput'), customWidthInput: $('customWidthInput'), customHeightInput: $('customHeightInput'), customKbInput: $('customKbInput'), toastRegion: $('toastRegion')
+};
+
+function uid() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, Number(value) || 0));
+}
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(bytes < 10240 ? 1 : 0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function safeBaseName(name) {
+  const base = String(name || 'photo').replace(/\.[^.]+$/, '');
+  return base.replace(/[<>:"/\\|?*\x00-\x1F]/g, '-').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'photo';
+}
+
+function extensionFor(mime) {
+  if (mime === 'image/webp') return 'webp';
+  if (mime === 'image/png') return 'png';
+  return 'jpg';
+}
+
+function defaultEdit() {
+  return {
+    rotation: 0,
+    flipH: 1,
+    flipV: 1,
+    zoom: 1,
+    panX: 0,
+    panY: 0,
+    brightness: 100,
+    contrast: 100,
+    saturation: 100,
+    grayscale: 0,
+    blur: 0,
+    sharpness: 0,
+    useCustomOutput: false,
+    customWidth: DEFAULTS.width,
+    customHeight: DEFAULTS.height,
+    customKb: DEFAULTS.targetKb
+  };
+}
+
+function isEditDefault(edit) {
+  return JSON.stringify(edit) === JSON.stringify(defaultEdit());
+}
+
+function showToast(message, type = '') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`.trim();
+  toast.textContent = message;
+  els.toastRegion.appendChild(toast);
+  setTimeout(() => toast.remove(), 3300);
+}
+
+function getBulkSettings() {
+  const width = clamp(els.widthInput.value, 1, 8000);
+  const height = clamp(els.heightInput.value, 1, 8000);
+  const targetKb = clamp(els.targetKbInput.value, 5, 5000);
+  return {
+    width,
+    height,
+    targetKb,
+    format: els.formatSelect.value,
+    fit: els.fitSelect.value,
+    background: /^#[0-9a-f]{6}$/i.test(els.backgroundHexInput.value.trim()) ? els.backgroundHexInput.value.trim().toUpperCase() : els.backgroundColorInput.value.toUpperCase(),
+    transparent: els.transparentInput.checked && els.formatSelect.value === 'image/png',
+    prefix: els.filenamePrefixInput.value.trim()
+  };
+}
+
+function resetBulkSettings() {
+  els.widthInput.value = DEFAULTS.width;
+  els.heightInput.value = DEFAULTS.height;
+  els.targetKbInput.value = DEFAULTS.targetKb;
+  els.formatSelect.value = DEFAULTS.format;
+  els.fitSelect.value = DEFAULTS.fit;
+  els.backgroundColorInput.value = DEFAULTS.background.toLowerCase();
+  els.backgroundHexInput.value = DEFAULTS.background;
+  els.transparentInput.checked = DEFAULTS.transparent;
+  els.filenamePrefixInput.value = DEFAULTS.prefix;
+  els.lockRatioInput.checked = false;
+  state.originalRatio = 1;
+  updateFormatState();
+  showToast('Bulk settings reset to 400×400 px and 100 KB.', 'success');
+}
+
+function updateFormatState() {
+  const isPng = els.formatSelect.value === 'image/png';
+  els.transparentInput.disabled = !isPng;
+  if (!isPng) els.transparentInput.checked = false;
+}
+
+function syncColorFromPicker() {
+  els.backgroundHexInput.value = els.backgroundColorInput.value.toUpperCase();
+}
+
+function syncColorFromHex() {
+  const value = els.backgroundHexInput.value.trim();
+  if (/^#[0-9a-f]{6}$/i.test(value)) els.backgroundColorInput.value = value;
+}
+
+function isSupportedImageFile(file) {
+  const type = String(file?.type || '').toLowerCase();
+  if (type.startsWith('image/')) return true;
+  // Android file managers sometimes return an empty MIME type. Fall back to extension.
+  return /\.(jpe?g|png|webp|gif|bmp|avif|heic|heif)$/i.test(String(file?.name || ''));
+}
+
+function imageFilesFromList(fileList) {
+  return Array.from(fileList || []).filter(isSupportedImageFile);
+}
+
+async function addFiles(fileList) {
+  if (state.processing) return;
+  const allFiles = Array.from(fileList || []);
+  const incoming = imageFilesFromList(allFiles);
+  if (!incoming.length) {
+    showToast('Photo select nahi hui. JPG, JPEG, PNG, WebP ya GIF choose karein.', 'error');
+    return;
+  }
+  const skipped = Math.max(0, allFiles.length - incoming.length);
+
+  const remaining = Math.max(0, MAX_FILES - state.items.length);
+  const accepted = incoming.slice(0, remaining);
+  if (!remaining) {
+    showToast(`Maximum ${MAX_FILES} photos allowed in one batch.`, 'error');
+    return;
+  }
+
+  const known = new Set(state.items.map((item) => `${item.file.name}|${item.file.size}|${item.file.lastModified}`));
+  let added = 0;
+  for (const file of accepted) {
+    const signature = `${file.name}|${file.size}|${file.lastModified}`;
+    if (known.has(signature)) continue;
+    known.add(signature);
+    const previewUrl = URL.createObjectURL(file);
+    state.items.push({ id: uid(), file, previewUrl, selected: false, edit: defaultEdit(), width: null, height: null });
+    added += 1;
+  }
+
+  if (incoming.length > accepted.length) showToast(`Only first ${remaining} photos were added. Batch limit is ${MAX_FILES}.`, 'error');
+  if (skipped) showToast(`${skipped} unsupported file skipped.`, 'error');
+  if (!added) {
+    showToast('These photos are already in the queue.', 'error');
+    return;
+  }
+
+  clearResults();
+  renderQueue();
+  showToast(`${added} photo${added === 1 ? '' : 's'} added.`, 'success');
+  hydrateDimensions(state.items.slice(-added));
+}
+
+async function hydrateDimensions(items) {
+  for (const item of items) {
+    try {
+      const img = await loadImage(item.file);
+      item.width = img.naturalWidth || img.width;
+      item.height = img.naturalHeight || img.height;
+    } catch { /* shown only during processing */ }
+  }
+  renderQueue();
+}
+
+function renderQueue() {
+  const hasItems = state.items.length > 0;
+  els.queueCard.classList.toggle('is-hidden', !hasItems);
+  els.processCard.classList.toggle('is-hidden', !hasItems);
+  els.queueSummary.textContent = `${state.items.length} photo${state.items.length === 1 ? '' : 's'} selected • ${formatBytes(state.items.reduce((sum, item) => sum + item.file.size, 0))}`;
+
+  const filter = els.searchInput.value.trim().toLowerCase();
+  const filtered = state.items.filter((item) => item.file.name.toLowerCase().includes(filter));
+  els.photoGrid.innerHTML = '';
+
+  if (!filtered.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = hasItems ? 'No filename matched your search.' : 'No photos added yet.';
+    els.photoGrid.appendChild(empty);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  for (const item of filtered) {
+    const card = document.createElement('article');
+    card.className = 'photo-card';
+    card.dataset.id = item.id;
+    const dimensions = item.width && item.height ? `${item.width}×${item.height}` : 'Reading...';
+    card.innerHTML = `
+      <input class="photo-select" type="checkbox" ${item.selected ? 'checked' : ''} aria-label="Select ${escapeHtml(item.file.name)}">
+      ${!isEditDefault(item.edit) ? '<span class="edit-badge">MANUAL EDIT</span>' : ''}
+      <div class="photo-thumb-wrap"><img src="${item.previewUrl}" alt="${escapeHtml(item.file.name)}" loading="lazy"></div>
+      <div class="photo-info">
+        <p class="photo-name" title="${escapeHtml(item.file.name)}">${escapeHtml(item.file.name)}</p>
+        <div class="photo-meta"><span>${dimensions}</span><span>${formatBytes(item.file.size)}</span></div>
+        <div class="photo-actions"><button class="edit-one" type="button">Manual Edit</button><button class="remove-one" type="button">Remove</button></div>
+      </div>`;
+    fragment.appendChild(card);
+  }
+  els.photoGrid.appendChild(fragment);
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+}
+
+function handleGridClick(event) {
+  const card = event.target.closest('.photo-card');
+  if (!card) return;
+  const item = state.items.find((entry) => entry.id === card.dataset.id);
+  if (!item) return;
+  if (event.target.classList.contains('edit-one')) openEditor(item.id);
+  if (event.target.classList.contains('remove-one')) removeItem(item.id);
+}
+
+function handleGridChange(event) {
+  if (!event.target.classList.contains('photo-select')) return;
+  const card = event.target.closest('.photo-card');
+  const item = state.items.find((entry) => entry.id === card?.dataset.id);
+  if (item) item.selected = event.target.checked;
+}
+
+function removeItem(id) {
+  const index = state.items.findIndex((item) => item.id === id);
+  if (index < 0) return;
+  URL.revokeObjectURL(state.items[index].previewUrl);
+  state.items.splice(index, 1);
+  clearResults();
+  renderQueue();
+}
+
+function removeSelected() {
+  const selected = state.items.filter((item) => item.selected);
+  if (!selected.length) {
+    showToast('Select photos first.', 'error');
+    return;
+  }
+  const ids = new Set(selected.map((item) => item.id));
+  selected.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+  state.items = state.items.filter((item) => !ids.has(item.id));
+  clearResults();
+  renderQueue();
+  showToast(`${selected.length} selected photo${selected.length === 1 ? '' : 's'} removed.`);
+}
+
+function clearAll() {
+  state.items.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+  state.items = [];
+  clearResults();
+  renderQueue();
+  els.fileInput.value = '';
+  els.folderInput.value = '';
+}
+
+function toggleSelectAll() {
+  const allSelected = state.items.length > 0 && state.items.every((item) => item.selected);
+  state.items.forEach((item) => { item.selected = !allSelected; });
+  els.selectAllBtn.textContent = allSelected ? 'Select all' : 'Unselect all';
+  renderQueue();
+}
+
+function loadImage(fileOrBlob) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(fileOrBlob);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image could not be decoded.')); };
+    img.src = url;
+  });
+}
+
+function getItemOutputSettings(item, bulk) {
+  if (item.edit.useCustomOutput) {
+    return { ...bulk, width: clamp(item.edit.customWidth, 1, 8000), height: clamp(item.edit.customHeight, 1, 8000), targetKb: clamp(item.edit.customKb, 5, 5000) };
+  }
+  return bulk;
+}
+
+function drawTransformedImage(ctx, img, width, height, fit, background, transparent, edit) {
+  ctx.save();
+  ctx.clearRect(0, 0, width, height);
+  if (!transparent) {
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  const rotation = ((edit.rotation % 360) + 360) % 360;
+  const quarterTurn = rotation === 90 || rotation === 270;
+  const sourceW = quarterTurn ? img.naturalHeight : img.naturalWidth;
+  const sourceH = quarterTurn ? img.naturalWidth : img.naturalHeight;
+
+  let scaleX = width / sourceW;
+  let scaleY = height / sourceH;
+  if (fit === 'contain') scaleX = scaleY = Math.min(scaleX, scaleY);
+  if (fit === 'cover') scaleX = scaleY = Math.max(scaleX, scaleY);
+  if (fit !== 'stretch') {
+    scaleX *= edit.zoom;
+    scaleY *= edit.zoom;
+  } else {
+    scaleX *= edit.zoom;
+    scaleY *= edit.zoom;
+  }
+
+  ctx.translate(width / 2 + (edit.panX / 100) * width, height / 2 + (edit.panY / 100) * height);
+  ctx.rotate(rotation * Math.PI / 180);
+  ctx.scale(scaleX * edit.flipH, scaleY * edit.flipV);
+  ctx.filter = `brightness(${edit.brightness}%) contrast(${edit.contrast}%) saturate(${edit.saturation}%) grayscale(${edit.grayscale}%) blur(${edit.blur}px)`;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+  ctx.restore();
+
+  if (edit.sharpness > 0) applySharpen(ctx, width, height, edit.sharpness);
+}
+
+function applySharpen(ctx, width, height, amount) {
+  if (width * height > 4_000_000) return;
+  const strength = clamp(amount, 0, 5) * 0.12;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const src = imageData.data;
+  const out = new Uint8ClampedArray(src);
+  const row = width * 4;
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const i = y * row + x * 4;
+      for (let c = 0; c < 3; c++) {
+        const center = src[i + c];
+        const lap = center * 4 - src[i - 4 + c] - src[i + 4 + c] - src[i - row + c] - src[i + row + c];
+        out[i + c] = clamp(center + lap * strength, 0, 255);
+      }
+    }
+  }
+  imageData.data.set(out);
+  ctx.putImageData(imageData, 0, 0);
+}
+
+function canvasToBlob(canvas, mime, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Browser could not export this image.')), mime, quality);
+  });
+}
+
+async function exportUnderTarget(canvas, mime, targetBytes) {
+  if (mime === 'image/png') {
+    const blob = await canvasToBlob(canvas, mime);
+    return { blob, quality: null, targetReached: blob.size <= targetBytes };
+  }
+
+  let low = 0.05;
+  let high = 0.95;
+  let best = null;
+  let bestQuality = low;
+  const minimum = await canvasToBlob(canvas, mime, low);
+  if (minimum.size > targetBytes) return { blob: minimum, quality: low, targetReached: false };
+
+  for (let i = 0; i < 10; i++) {
+    const quality = (low + high) / 2;
+    const blob = await canvasToBlob(canvas, mime, quality);
+    if (blob.size <= targetBytes) {
+      best = blob;
+      bestQuality = quality;
+      low = quality;
+    } else {
+      high = quality;
+    }
+  }
+  return { blob: best || minimum, quality: bestQuality, targetReached: true };
+}
+
+const CRC32_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+
+function crc32(bytes) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) crc = CRC32_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function toDosDateTime(date = new Date()) {
+  const year = Math.max(1980, date.getFullYear());
+  const dosTime = ((date.getHours() & 0x1F) << 11) | ((date.getMinutes() & 0x3F) << 5) | Math.floor(date.getSeconds() / 2);
+  const dosDate = (((year - 1980) & 0x7F) << 9) | (((date.getMonth() + 1) & 0x0F) << 5) | (date.getDate() & 0x1F);
+  return { dosTime, dosDate };
+}
+
+async function createStoredZip(entries, onProgress = () => {}) {
+  const encoder = new TextEncoder();
+  const localParts = [];
+  const centralParts = [];
+  const { dosTime, dosDate } = toDosDateTime();
+  let localOffset = 0;
+  let centralSize = 0;
+
+  for (let index = 0; index < entries.length; index++) {
+    const entry = entries[index];
+    const nameBytes = encoder.encode(entry.name);
+    const data = new Uint8Array(await entry.blob.arrayBuffer());
+    const checksum = crc32(data);
+
+    const localHeader = new Uint8Array(30 + nameBytes.length);
+    const localView = new DataView(localHeader.buffer);
+    localView.setUint32(0, 0x04034B50, true);
+    localView.setUint16(4, 20, true);
+    localView.setUint16(6, 0x0800, true);
+    localView.setUint16(8, 0, true);
+    localView.setUint16(10, dosTime, true);
+    localView.setUint16(12, dosDate, true);
+    localView.setUint32(14, checksum, true);
+    localView.setUint32(18, data.length, true);
+    localView.setUint32(22, data.length, true);
+    localView.setUint16(26, nameBytes.length, true);
+    localView.setUint16(28, 0, true);
+    localHeader.set(nameBytes, 30);
+    localParts.push(localHeader, data);
+
+    const centralHeader = new Uint8Array(46 + nameBytes.length);
+    const centralView = new DataView(centralHeader.buffer);
+    centralView.setUint32(0, 0x02014B50, true);
+    centralView.setUint16(4, 20, true);
+    centralView.setUint16(6, 20, true);
+    centralView.setUint16(8, 0x0800, true);
+    centralView.setUint16(10, 0, true);
+    centralView.setUint16(12, dosTime, true);
+    centralView.setUint16(14, dosDate, true);
+    centralView.setUint32(16, checksum, true);
+    centralView.setUint32(20, data.length, true);
+    centralView.setUint32(24, data.length, true);
+    centralView.setUint16(28, nameBytes.length, true);
+    centralView.setUint16(30, 0, true);
+    centralView.setUint16(32, 0, true);
+    centralView.setUint16(34, 0, true);
+    centralView.setUint16(36, 0, true);
+    centralView.setUint32(38, 0, true);
+    centralView.setUint32(42, localOffset, true);
+    centralHeader.set(nameBytes, 46);
+    centralParts.push(centralHeader);
+
+    localOffset += localHeader.length + data.length;
+    centralSize += centralHeader.length;
+    onProgress(index + 1, entries.length);
+    await nextFrame();
+  }
+
+  const end = new Uint8Array(22);
+  const endView = new DataView(end.buffer);
+  endView.setUint32(0, 0x06054B50, true);
+  endView.setUint16(4, 0, true);
+  endView.setUint16(6, 0, true);
+  endView.setUint16(8, entries.length, true);
+  endView.setUint16(10, entries.length, true);
+  endView.setUint32(12, centralSize, true);
+  endView.setUint32(16, localOffset, true);
+  endView.setUint16(20, 0, true);
+
+  return new Blob([...localParts, ...centralParts, end], { type: 'application/zip' });
+}
+
+async function processItem(item, index, duplicateNames) {
+  const bulk = getBulkSettings();
+  const settings = getItemOutputSettings(item, bulk);
+  const img = await loadImage(item.file);
+  const canvas = document.createElement('canvas');
+  canvas.width = settings.width;
+  canvas.height = settings.height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: item.edit.sharpness > 0 });
+  if (!ctx) throw new Error('Canvas is not supported by this browser.');
+
+  drawTransformedImage(ctx, img, settings.width, settings.height, settings.fit, settings.background, settings.transparent, item.edit);
+  const exported = await exportUnderTarget(canvas, settings.format, settings.targetKb * 1024);
+  const base = `${settings.prefix}${safeBaseName(item.file.name)}`;
+  let filename = `${base}.${extensionFor(settings.format)}`;
+  const count = duplicateNames.get(filename) || 0;
+  duplicateNames.set(filename, count + 1);
+  if (count > 0) filename = `${base}-${count + 1}.${extensionFor(settings.format)}`;
+
+  return {
+    id: item.id,
+    index,
+    filename,
+    blob: exported.blob,
+    originalSize: item.file.size,
+    outputSize: exported.blob.size,
+    targetKb: settings.targetKb,
+    targetReached: exported.targetReached,
+    width: settings.width,
+    height: settings.height
+  };
+}
+
+async function processAll() {
+  if (!state.items.length || state.processing) return;
+  state.processing = true;
+  clearResults();
+  els.processBtn.disabled = true;
+  els.progressArea.classList.remove('is-hidden');
+  els.resultActions.classList.add('is-hidden');
+  els.errorList.classList.add('is-hidden');
+  const errors = [];
+  const duplicateNames = new Map();
+  let originalBytes = 0;
+  let outputBytes = 0;
+
+  for (let i = 0; i < state.items.length; i++) {
+    const item = state.items[i];
+    updateProgress(i, state.items.length, `Processing ${item.file.name}`);
+    await nextFrame();
+    try {
+      const result = await processItem(item, i, duplicateNames);
+      state.results.push(result);
+      originalBytes += result.originalSize;
+      outputBytes += result.outputSize;
+    } catch (error) {
+      errors.push({ name: item.file.name, message: error?.message || 'Unknown processing error' });
+    }
+    updateCounters(errors, originalBytes, outputBytes);
+  }
+
+  updateProgress(state.items.length, state.items.length, 'Creating ZIP file...');
+  try {
+    const report = new Blob([buildReport(errors)], { type: 'text/plain;charset=utf-8' });
+    const zipEntries = state.results.map((result) => ({ name: result.filename, blob: result.blob }));
+    zipEntries.push({ name: 'processing-report.txt', blob: report });
+    state.zipBlob = await createStoredZip(zipEntries, (done, total) => {
+      els.progressText.textContent = `Creating ZIP • ${Math.round((done / total) * 100)}%`;
+    });
+  } catch (error) {
+    errors.push({ name: 'ZIP', message: error?.message || 'ZIP creation failed' });
+  }
+
+  updateProgress(state.items.length, state.items.length, 'Processing complete');
+  updateCounters(errors, originalBytes, outputBytes);
+  els.processBtn.disabled = false;
+  state.processing = false;
+
+  if (state.results.length && state.zipBlob) els.resultActions.classList.remove('is-hidden');
+  if (errors.length) renderErrors(errors);
+  const oversized = state.results.filter((result) => !result.targetReached).length;
+  if (oversized) showToast(`${oversized} photo${oversized === 1 ? '' : 's'} could not reach target KB at minimum quality.`, 'error');
+  else showToast(`${state.results.length} photos processed successfully.`, 'success');
+}
+
+function buildReport(errors) {
+  const settings = getBulkSettings();
+  const lines = [
+    'BulkPix Studio Processing Report',
+    `Created: ${new Date().toLocaleString()}`,
+    `Bulk settings: ${settings.width}x${settings.height}px, max ${settings.targetKb}KB, ${settings.format}, ${settings.fit}`,
+    `Processed: ${state.results.length}`,
+    `Errors: ${errors.length}`,
+    '',
+    ...state.results.map((r) => `${r.filename} | ${r.width}x${r.height}px | ${formatBytes(r.outputSize)} | target ${r.targetKb}KB | ${r.targetReached ? 'OK' : 'ABOVE TARGET'}`)
+  ];
+  if (errors.length) lines.push('', 'Errors:', ...errors.map((e) => `${e.name}: ${e.message}`));
+  return lines.join('\n');
+}
+
+function updateProgress(done, total, text) {
+  const percent = total ? Math.round((done / total) * 100) : 0;
+  els.progressText.textContent = text;
+  els.progressPercent.textContent = `${percent}%`;
+  els.progressBar.style.width = `${percent}%`;
+}
+
+function updateCounters(errors, originalBytes, outputBytes) {
+  els.successCount.textContent = `${state.results.length} completed`;
+  els.errorCount.textContent = `${errors.length} errors`;
+  const saved = Math.max(0, originalBytes - outputBytes);
+  els.sizeSavedText.textContent = `${formatBytes(saved)} saved`;
+}
+
+function renderErrors(errors) {
+  els.errorList.classList.remove('is-hidden');
+  els.errorList.innerHTML = `<strong>Problems</strong>${errors.map((error) => `<p>${escapeHtml(error.name)}: ${escapeHtml(error.message)}</p>`).join('')}`;
+}
+
+function clearResults() {
+  state.resultUrls.forEach((url) => URL.revokeObjectURL(url));
+  state.resultUrls = [];
+  state.results = [];
+  state.zipBlob = null;
+  els.progressArea.classList.add('is-hidden');
+  els.resultActions.classList.add('is-hidden');
+  els.errorList.classList.add('is-hidden');
+  els.progressBar.style.width = '0%';
+  els.progressPercent.textContent = '0%';
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  state.resultUrls.push(url);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    state.resultUrls = state.resultUrls.filter((item) => item !== url);
+  }, 60000);
+}
+
+function downloadZip() {
+  if (!state.zipBlob) {
+    showToast('Process photos first.', 'error');
+    return;
+  }
+  downloadBlob(state.zipBlob, `bulk-pix-${new Date().toISOString().slice(0, 10)}.zip`);
+}
+
+async function downloadIndividually() {
+  if (!state.results.length) return;
+  showToast('Browser may ask permission for multiple downloads.');
+  for (const result of state.results) {
+    downloadBlob(result.blob, result.filename);
+    await new Promise((resolve) => setTimeout(resolve, 180));
+  }
+}
+
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+async function openEditor(id) {
+  const item = state.items.find((entry) => entry.id === id);
+  if (!item) return;
+  state.currentEditId = id;
+  state.editorDraft = typeof structuredClone === 'function' ? structuredClone(item.edit) : JSON.parse(JSON.stringify(item.edit));
+  els.editorTitle.textContent = item.file.name;
+  els.editorModal.classList.remove('is-hidden');
+  document.body.style.overflow = 'hidden';
+  els.canvasLoading.classList.remove('is-hidden');
+  syncEditorInputs();
+  try {
+    state.editorImage = await loadImage(item.file);
+    await renderEditorPreview();
+  } catch (error) {
+    showToast(error.message, 'error');
+    closeEditor();
+  } finally {
+    els.canvasLoading.classList.add('is-hidden');
+  }
+}
+
+function closeEditor() {
+  els.editorModal.classList.add('is-hidden');
+  document.body.style.overflow = '';
+  state.currentEditId = null;
+  state.editorDraft = null;
+  state.editorImage = null;
+}
+
+function syncEditorInputs() {
+  const e = state.editorDraft;
+  els.zoomRange.value = Math.round(e.zoom * 100);
+  els.panXRange.value = e.panX;
+  els.panYRange.value = e.panY;
+  els.brightnessRange.value = e.brightness;
+  els.contrastRange.value = e.contrast;
+  els.saturationRange.value = e.saturation;
+  els.grayscaleRange.value = e.grayscale;
+  els.blurRange.value = e.blur;
+  els.sharpnessRange.value = e.sharpness;
+  els.useCustomOutputInput.checked = e.useCustomOutput;
+  els.customWidthInput.value = e.customWidth;
+  els.customHeightInput.value = e.customHeight;
+  els.customKbInput.value = e.customKb;
+  updateEditorOutputs();
+  updateCustomFields();
+}
+
+function updateEditorOutputs() {
+  els.zoomOutput.value = `${els.zoomRange.value}%`;
+  els.panXOutput.value = els.panXRange.value;
+  els.panYOutput.value = els.panYRange.value;
+  els.brightnessOutput.value = `${els.brightnessRange.value}%`;
+  els.contrastOutput.value = `${els.contrastRange.value}%`;
+  els.saturationOutput.value = `${els.saturationRange.value}%`;
+  els.grayscaleOutput.value = `${els.grayscaleRange.value}%`;
+  els.blurOutput.value = `${els.blurRange.value}px`;
+  els.sharpnessOutput.value = els.sharpnessRange.value;
+}
+
+function readEditorDraftFromInputs() {
+  const e = state.editorDraft;
+  e.zoom = clamp(els.zoomRange.value, 50, 300) / 100;
+  e.panX = clamp(els.panXRange.value, -100, 100);
+  e.panY = clamp(els.panYRange.value, -100, 100);
+  e.brightness = clamp(els.brightnessRange.value, 0, 200);
+  e.contrast = clamp(els.contrastRange.value, 0, 200);
+  e.saturation = clamp(els.saturationRange.value, 0, 200);
+  e.grayscale = clamp(els.grayscaleRange.value, 0, 100);
+  e.blur = clamp(els.blurRange.value, 0, 10);
+  e.sharpness = clamp(els.sharpnessRange.value, 0, 5);
+  e.useCustomOutput = els.useCustomOutputInput.checked;
+  e.customWidth = clamp(els.customWidthInput.value, 1, 8000);
+  e.customHeight = clamp(els.customHeightInput.value, 1, 8000);
+  e.customKb = clamp(els.customKbInput.value, 5, 5000);
+}
+
+async function renderEditorPreview() {
+  if (!state.editorImage || !state.editorDraft) return;
+  readEditorDraftFromInputs();
+  updateEditorOutputs();
+  const bulk = getBulkSettings();
+  const width = state.editorDraft.useCustomOutput ? state.editorDraft.customWidth : bulk.width;
+  const height = state.editorDraft.useCustomOutput ? state.editorDraft.customHeight : bulk.height;
+  const maxPreview = 900;
+  const previewScale = Math.min(1, maxPreview / Math.max(width, height));
+  els.editorCanvas.width = Math.max(1, Math.round(width * previewScale));
+  els.editorCanvas.height = Math.max(1, Math.round(height * previewScale));
+  const ctx = els.editorCanvas.getContext('2d', { willReadFrequently: state.editorDraft.sharpness > 0 });
+  const previewEdit = { ...state.editorDraft, sharpness: state.editorDraft.sharpness };
+  drawTransformedImage(ctx, state.editorImage, els.editorCanvas.width, els.editorCanvas.height, bulk.fit, bulk.background, bulk.transparent, previewEdit);
+}
+
+function updateCustomFields() {
+  const disabled = !els.useCustomOutputInput.checked;
+  els.customWidthInput.disabled = disabled;
+  els.customHeightInput.disabled = disabled;
+  els.customKbInput.disabled = disabled;
+}
+
+function mutateEditor(mutator) {
+  if (!state.editorDraft) return;
+  mutator(state.editorDraft);
+  syncEditorInputs();
+  renderEditorPreview();
+}
+
+function resetCurrentEdit() {
+  if (!state.editorDraft) return;
+  const bulk = getBulkSettings();
+  state.editorDraft = { ...defaultEdit(), customWidth: bulk.width, customHeight: bulk.height, customKb: bulk.targetKb };
+  syncEditorInputs();
+  renderEditorPreview();
+}
+
+function saveCurrentEdit() {
+  const item = state.items.find((entry) => entry.id === state.currentEditId);
+  if (!item || !state.editorDraft) return;
+  readEditorDraftFromInputs();
+  item.edit = JSON.parse(JSON.stringify(state.editorDraft));
+  clearResults();
+  renderQueue();
+  closeEditor();
+  showToast('Manual edit saved for this photo.', 'success');
+}
+
+function bindRange(id) {
+  els[id].addEventListener('input', () => {
+    updateEditorOutputs();
+    renderEditorPreview();
+  });
+}
+
+els.choosePhotosBtn.addEventListener('click', () => {
+  els.fileInput.value = '';
+  els.fileInput.click();
+});
+els.chooseFolderBtn.addEventListener('click', () => {
+  els.folderInput.value = '';
+  els.folderInput.click();
+});
+els.fileInput.addEventListener('change', async (event) => {
+  await addFiles(event.target.files);
+  event.target.value = '';
+});
+els.folderInput.addEventListener('change', async (event) => {
+  await addFiles(event.target.files);
+  event.target.value = '';
+});
+els.dropZone.addEventListener('dragover', (event) => { event.preventDefault(); els.dropZone.classList.add('is-dragging'); });
+els.dropZone.addEventListener('dragleave', () => els.dropZone.classList.remove('is-dragging'));
+els.dropZone.addEventListener('drop', (event) => { event.preventDefault(); els.dropZone.classList.remove('is-dragging'); addFiles(event.dataTransfer.files); });
+
+els.backgroundColorInput.addEventListener('input', syncColorFromPicker);
+els.backgroundHexInput.addEventListener('input', syncColorFromHex);
+els.formatSelect.addEventListener('change', updateFormatState);
+els.resetSettingsBtn.addEventListener('click', resetBulkSettings);
+els.widthInput.addEventListener('input', () => {
+  if (els.lockRatioInput.checked) els.heightInput.value = Math.max(1, Math.round(Number(els.widthInput.value) / state.originalRatio));
+});
+els.heightInput.addEventListener('input', () => {
+  if (els.lockRatioInput.checked) els.widthInput.value = Math.max(1, Math.round(Number(els.heightInput.value) * state.originalRatio));
+});
+els.lockRatioInput.addEventListener('change', () => { state.originalRatio = Math.max(.0001, Number(els.widthInput.value) / Math.max(1, Number(els.heightInput.value))); });
+
+els.photoGrid.addEventListener('click', handleGridClick);
+els.photoGrid.addEventListener('change', handleGridChange);
+els.searchInput.addEventListener('input', renderQueue);
+els.selectAllBtn.addEventListener('click', toggleSelectAll);
+els.removeSelectedBtn.addEventListener('click', removeSelected);
+els.clearAllBtn.addEventListener('click', clearAll);
+els.processBtn.addEventListener('click', processAll);
+els.downloadZipBtn.addEventListener('click', downloadZip);
+els.downloadIndividualBtn.addEventListener('click', downloadIndividually);
+
+els.closeEditorBtn.addEventListener('click', closeEditor);
+els.cancelEditBtn.addEventListener('click', closeEditor);
+els.editorModal.addEventListener('click', (event) => { if (event.target === els.editorModal) closeEditor(); });
+els.saveEditBtn.addEventListener('click', saveCurrentEdit);
+els.resetEditBtn.addEventListener('click', resetCurrentEdit);
+els.rotateLeftBtn.addEventListener('click', () => mutateEditor((e) => { e.rotation = (e.rotation - 90) % 360; }));
+els.rotateRightBtn.addEventListener('click', () => mutateEditor((e) => { e.rotation = (e.rotation + 90) % 360; }));
+els.flipHBtn.addEventListener('click', () => mutateEditor((e) => { e.flipH *= -1; }));
+els.flipVBtn.addEventListener('click', () => mutateEditor((e) => { e.flipV *= -1; }));
+['zoomRange','panXRange','panYRange','brightnessRange','contrastRange','saturationRange','grayscaleRange','blurRange','sharpnessRange'].forEach(bindRange);
+els.useCustomOutputInput.addEventListener('change', () => { updateCustomFields(); renderEditorPreview(); });
+[els.customWidthInput, els.customHeightInput, els.customKbInput].forEach((input) => input.addEventListener('input', renderEditorPreview));
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !els.editorModal.classList.contains('is-hidden')) closeEditor(); });
+window.addEventListener('beforeunload', () => { state.items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); state.resultUrls.forEach((url) => URL.revokeObjectURL(url)); });
+
+updateFormatState();
+renderQueue();
+
+  </script>
+</body>
+</html>
